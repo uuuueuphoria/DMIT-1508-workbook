@@ -4,7 +4,7 @@
 
 ### 0NF
 
-**Customer:**(<b class="pk">CustomerNumber</b>, FirstName, LastName, Address, City, Province, PostalCode, HomePhone)
+**Customer:**<span class="md"><b class="pk">CustomerNumber</b>, FirstName, LastName, Address, City, Province, PostalCode, HomePhone</span>
 
 ### 1NF-3NF
 
@@ -17,7 +17,7 @@
 
 ### ONF
 
-**Order:**(<b class="pk">OrderNumber</b>, CustomerNumber, FirstName, LastName, Address, City, Province, PostalCode, Phone, Date, <b class="rg">ItemNumber, Description, Quantity, CurrentPrice, SellingPrice, Amount </b>, subtotal, GST, Total)
+**Order:**<span class="md"><b class="pk">OrderNumber</b>, CustomerNumber, FirstName, LastName, Address, City, Province, PostalCode, Phone, Date, <b class="rg">ItemNumber, Description, Quantity, CurrentPrice, SellingPrice, Amount </b>, subtotal, GST, Total</span>
 
 ----
 
@@ -112,11 +112,8 @@ This legend is a guide to reading and interpreting the table listings under 0NF 
     font-size: 1.2em;
     font-weight: bold;
 }
-.rg {
-    color: darkorange;
-    font-size: 1.2em;
-    font-weight: bold;
-}
+
+
 .rg {
     display: inline-block;
     color: inheritl
