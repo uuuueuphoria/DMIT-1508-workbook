@@ -1,5 +1,7 @@
 # DMIT-1508 In-Class Examples (Jan 2019)
 
+> Wanlun Xue
+
 The files in this repository branch are my in-class examples. Additionally, you can find online notes at the course's [Moodle site](https://moodle.nait.ca) and on the unofficial [website notes](https://dmit-1508.github.io). Also be sure to checkout out the [**Learning Outcomes**](https://dmit-1508.github.io/about/LOGs.html) that I use in class.
 
 ## Outline
