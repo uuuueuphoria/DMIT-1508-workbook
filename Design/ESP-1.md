@@ -1,5 +1,18 @@
 # Lab Template
 
+## Shipper Details View
+
+### 0NF
+
+**Shipper:** <span class="md"><b class="pk">ShipperNumber</b>, Name, Address, City, Province, PostalCode, Phone</span>
+
+### 1NF-3NF
+
+*No changes to the entity/table in 1NF to 3NF*
+
+### ERD
+> TODO: Place image here
+
 ## Customer Details View
 
 ### 0NF
