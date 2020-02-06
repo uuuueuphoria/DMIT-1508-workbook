@@ -110,6 +110,8 @@ CREATE NONCLUSTERED INDEX IX_Students_Surname
 -- 1) Add a PostalCode for Student table
 ALTER TABLE Students
 	ADD PostalCode char(6) NULL
+
+GO
 	--Adding this as a nullable column, because students already exist,
 	--and we donot have postal coded for those students.
 
@@ -117,3 +119,5 @@ ALTER TABLE Students
 ALTER TABLE Students
 	ADD CONSTRAINT CK_Students_PostalCode
 		CHECK (PostalCode LIKE '[A-Z][0-9][A-Z][0-9][A-Z][0-9]')
+
+GO
