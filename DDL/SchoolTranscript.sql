@@ -121,3 +121,27 @@ ALTER TABLE Students
 		CHECK (PostalCode LIKE '[A-Z][0-9][A-Z][0-9][A-Z][0-9]')
 
 GO
+
+--3) Add a default consttaint for the Status column of StudentCourses.
+-- Set 'E' as the default value
+
+ALTER TABLE StudentCourses
+	ADD CONSTRAINT DF_StudentCourses_Status
+		DEFAULT ('E') FOR [Status] -- in a alter table statemeemt, the column must be specified for the default value
+
+GO
+
+/*---Other odds and Ends---*/
+
+sp_help Students -- get schema information for the students table
+
+--In a table, we can have some columns be "calculated" or "derived" columns
+-- where the value of the column is a calculation from other columns
+
+CREATE TABLE Invoice
+(
+	InvoiceID			int				NOT NULL,
+	Subtotal			money			NOT NULL,
+	GST					money			NOT NULL,
+	Total				AS Subtotal+GST   -- this is a computed column
+  )
