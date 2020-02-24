@@ -169,7 +169,7 @@ WHERE  ClubName LIKE 'N%' OR ClubName LIKE 'C%'
 
 SELECT	S.LastName, S.FirstName, S.StreetAddress, S.City
 FROM    Student S
-WHERE	S.LastName LIKE '___'
+WHERE	S.LastName LIKE '[A-Z][A-Z][A-Z]'
 
 --14. Select all the StudentID's where the PaymentAmount < 500 OR the PaymentTypeID is 5
 
