@@ -22,15 +22,18 @@ GROUP BY CourseId                   -- Group by the non-aggregate columns
 -- 2. How many payments were made for each payment type.
 --   Display the Payment Type ID and the count
 SELECT  PaymentTypeID,                              -- Non-aggregate column (btw, it's a FK)
-        COUNT(PaymentTypeID) AS 'Count of Pay Type' -- Aggregate column
+        COUNT(PaymentID) AS 'Count of Pay Type' -- Aggregate column
 FROM    Payment
 GROUP BY PaymentTypeID
+--let us see what the payment types are
+SELECT	P.PaymentTypeID, P.PaymentTypeDescription
+FROM	PaymentType AS P
 -- 2a. Do the same as above, but sort it from most frequent payment type to the least frequent
 SELECT  PaymentTypeID,                              -- Non-aggregate column (btw, it's a FK)
         COUNT(PaymentTypeID) AS 'Count of Pay Type' -- Aggregate column
 FROM    Payment
 GROUP BY PaymentTypeID
-ORDER BY COUNT(PaymentTypeID) ASC
+ORDER BY COUNT(PaymentTypeID) DESC --DESCENDING ORDER
 -- HELP! Is the answer above correct?? How can we fix it?
 /* A note on ORDER BY
    - The ORDER BY clause will, by default, do the sorting in ascending order.
@@ -41,6 +44,12 @@ ORDER BY COUNT(PaymentTypeID) ASC
 
 -- 3. Select the average Mark for each studentID. Display the StudentId and their average mark
 -- TODO: Student Answer Here....
+SELECT		StudentID, 
+			AVG(Mark) AS 'Average Mark'
+FROM		Registration
+GROUP BY	StudentID
+ORDER BY	AVG(Mark) DESC
+
 
 -- 4. Select the same data as question 3 but only show the studentID's and averages that are > 80
 SELECT StudentID,
@@ -67,13 +76,17 @@ HAVING COUNT(StudentID) >= 2
 SELECT MAX(Amount) AS 'Highest',
        MIN(Amount) AS 'Lowest',
        AVG(Amount) AS 'Average'
---       , PaymentTypeID
+--    , PaymentTypeID
 FROM   Payment
 GROUP BY PaymentTypeID
 
 
 -- 8. How many students are there in each club? Show the clubID and the count
 -- TODO: Student Answer Here....
+SELECT		COUNT(StudentID) AS 'Student Count',
+			ClubID
+FROM		Activity
+GROUP BY	ClubId
 
 -- Check your answer by manually grouping students by their club membership and counting them
 SELECT  ClubId, StudentID
@@ -82,13 +95,44 @@ FROM    Activity
 -- 9. Which clubs have 3 or more students in them?
 -- TODO: Student Answer Here....
 
+SELECT		ClubID
+FROM		Activity
+GROUP BY	ClubId
+HAVING		COUNT(StudentID)>=3
 
 --10. Grouping the courses by the number of hours in each course, what is the average cost of those courses? Display the course hours and the average cost.
 
+SELECT		AVG(C.CourseCost) AS 'Average Course Cost',
+			C.CourseHours
+FROM		Course AS C
+GROUP BY	C.CourseHours
+
 --11. Which teachers are getting the best results from the courses they teach? Display the staff ID and the average course mark, sorted by the course mark from highest to lowest.
 
+SELECT		R.StaffID,
+			AVG(R.Mark) AS 'Average course mark'
+FROM		Registration AS R
+GROUP BY	R.StaffID
+ORDER BY	AVG(R.Mark) DESC
 --12. How many male and female students do we have?
+
+SELECT		S.Gender,
+			COUNT(StudentID) AS 'STUDENT COUNT'
+FROM		Student AS S
+GROUP BY	S.Gender
 
 --13. Show the average balance owing for male and female students.
 
+SELECT		AVG(S.BalanceOwing) AS 'AVG balance',
+			S.Gender
+FROM		Student AS S
+GROUP BY	S.Gender
+
+
+
 --14. How many students participate in school clubs? Display the club id and the number of students. (Hint: You should be using the Activity table for this question.)
+
+SELECT		A.ClubId,
+			COUNT(A.StudentID) AS 'Number of Students'
+FROM		Activity AS A
+GROUP BY	A.ClubId
