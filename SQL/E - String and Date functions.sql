@@ -4,7 +4,7 @@ GO
 
 -- *******************************
 -- STRING FUNCTIONS
-	-- LEN
+	-- LEN (short for length. tell you how many  characters
 	SELECT LEN('Hello World') AS 'Number of characters'
 	-- LEFT
 	SELECT LEFT('Hello World', 5) AS 'First five characters'
@@ -16,7 +16,7 @@ GO
     ORDER BY 1 -- sorted by the first column
 
 	-- SUBSTRING
-	SELECT SUBSTRING('Hello World', 1, 2)
+	SELECT SUBSTRING('Hello World', 1, 2) --position1, going 2 characters
 	SELECT SUBSTRING('To be or not to be', 10, 3)
 	-- REVERSE
     SELECT REVERSE('Dan')
@@ -29,6 +29,8 @@ GO
 	-- Modifying
 		-- LTRIM, RTRIM -- To remove whitespace from the left or the right
 		-- UPPER, LOWER -- Return upper and lower characters
+
+
 
 -- Date Functions
 	-- GETDATE()
@@ -43,7 +45,7 @@ GO
     SELECT FirstName, MONTH(Birthdate) AS 'Birth Month' FROM Student
     WHERE  MONTH(Birthdate) = DATEPART(MONTH, GETDATE())
 	-- YEAR
-	-- DATEDIFF - Staff.DateHired - DateReleased
+	-- DATEDIFF -  DateReleased - Staff.DateHired
 	SELECT FirstName + ' ' + LastName AS 'Staff Name',
 	       DATEDIFF(DAY, DateHired, DateReleased) AS 'Days Employed'
            -->> DateReleased - DateHired, expressed as number of Days
@@ -53,13 +55,14 @@ GO
 	-- DATEADD
 	SELECT DATEADD(DAY, 7, GETDATE()) AS 'Date a week from now'
 	-- ISDATE
+	-- one true, one false
 	SELECT ISDATE(GETDATE()) AS 'GETDATE() Info',
 	       ISDATE('Hi Dan') AS 'Not a Date'
 
 -- *******************************
 
 -- 1. Select the staff names and the name of the month they were hired
-SELECT  FirstName, LastName, DATENAME(mm, DateHired) AS 'Month Hired'
+SELECT  FirstName, LastName, DATENAME(Month,DateHired) AS 'Month Hired'
 FROM    Staff
 
 -- 2. How many days did Tess Agonor work for the school?
@@ -92,15 +95,26 @@ WHERE   Mark IS NOT NULL
 
 -- 6. select last three characters of all the courses
 
+SELECT	RIGHT(CourseID,3) AS 'Last 3 characters'
+FROM	Course
+
 
 -- 7. Select the characters in the position description from characters 8 to 13 for PositionID 5
 
+SELECT		SUBSTRING(PositionDescription, 8, 5) AS 'name'
+FROM		Position
+WHERE		PositionID=5
 
 -- 8. Select all the Student First Names as upper case.
 
+SELECT		UPPER(FirstName)
+FROM		Student
 
 -- 9. Select the First Names of students whose first names are 3 characters long.
 
+SELECT		FirstName
+FROM		Student
+WHERE		LEN(firstName)=3
 
 /* ************************************************
     String Functions
