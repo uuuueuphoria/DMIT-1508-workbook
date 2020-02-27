@@ -51,17 +51,55 @@ GROUP BY	ClubName
 --6. How many times has each course been offered? Display the course ID and course name along with the number of times it has been offered.
 -- TODO: Student Answer Here...
 
+SELECT		C.CourseId,
+			C.CourseName,
+			COUNT (R.Semester) AS 'number of times it offered'
+FROM		Course AS C
+	LEFT OUTER JOIN Registration AS R ON C.CourseId=R.CourseId
+GROUP BY	C.CourseId,
+			C.CourseName
+
 --7. How many courses have each of the staff taught? Display the full name and the count.
 -- TODO: Student Answer Here...
+
+SELECT		S.FirstName + ' ' + S.LastName AS 'Staff Name',
+			COUNT (R.CourseId) AS 'number of times'
+FROM		Staff AS S
+	LEFT OUTER JOIN Registration AS R ON S.StaffID=R.StaffID
+ GROUP BY	S.FirstName, s.LastName
 
 --8. How many second-year courses have the staff taught? Include all the staff and their job position.
 --   A second-year course is one where the number portion of the course id starts with a '2'.
 -- TODO: Student Answer Here...
 
+SELECT		S.FirstName + ' ' + S.LastName as 'staff name',
+			P.PositionDescription,
+			COUNT (R.CourseId) AS 'Course count'
+FROM		Staff AS S
+	LEFT OUTER JOIN Position AS P ON S.PositionID=P.PositionID
+	LEFT OUTER JOIN Registration AS R ON S.StaffID=R.StaffID
+
+WHERE   	R.CourseId LIKE '____2%'
+	OR R.CourseId IS NULL
+GROUP BY	P.PositionDescription, S.FirstName, S.LastName
 --9. What is the average payment amount made by each student? Include all the students,
 --   and display the students' full names.
 -- TODO: Student Answer Here...
 
+SELECT		S.FirstName + ' ' + S.LastName AS 'Student name',
+			AVG(P.Amount) as 'payment amount'
+FROM		Student AS S
+	LEFT OUTER JOIN Payment AS P ON S.StudentID=P.StudentID
+GROUP BY	S.FirstName, S.LastName
+
 --10. Display the names of all students who have not made a payment.
 -- TODO: Student Answer Here...
+
+SELECT		S.FirstName + ' ' + S.LastName AS 'Student name'
+		
+FROM		Student AS S
+	LEFT OUTER JOIN Payment AS P ON S.StudentID=P.StudentID
+
+WHERE		P.Amount IS NULL
+
 
