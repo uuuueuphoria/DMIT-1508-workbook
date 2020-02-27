@@ -50,10 +50,30 @@ GROUP BY    S.FirstName  + ' ' + S.LastName  -- Since my non-aggregate is an exp
 --5. Select the same data as question 4 but only show the student names and averages that are 80% or higher. (HINT: Remember the HAVING clause?)
  -- TODO: Student Answer Here... 
 
+SELECT  S.FirstName  + ' ' + S.LastName AS 'Student Name',
+        AVG(R.Mark)                     AS 'Average'
+FROM    Registration AS R
+        INNER JOIN Student AS S
+            ON S.StudentID = R.StudentID
+GROUP BY    S.FirstName  + ' ' + S.LastName
+HAVING	AVG(R.Mark)>=80
 
 --6. What is the highest, lowest and average payment amount for each payment type Description?
  -- TODO: Student Answer Here... 
 
+ SELECT		T.PaymentTypeDescription,
+			MAX(P.Amount) AS 'Highest',
+			MIN(P.Amount) AS 'Lowest',
+			AVG(P.Amount) AS 'average'
+ FROM		PaymentType AS T
+	INNER JOIN Payment AS P ON T.PaymentTypeID=P.PaymentTypeID
+ GROUP BY	T.PaymentTypeDescription
  
 --7. Which clubs have 3 or more students in them? Display the Club Names.
  -- TODO: Student Answer Here... 
+
+ SELECT		ClubName,
+			COUNT (StudentID) AS 'number of student'
+FROM		Club AS C
+	INNER JOIN Activity AS A ON C.ClubID=A.ClubID
+GROUP BY	ClubName
