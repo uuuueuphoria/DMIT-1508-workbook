@@ -24,8 +24,22 @@ WHERE  PaymentTypeDescription = 'cash'
 --2. Select The Student ID's of all the students that are in the 'Association of Computing Machinery' club
 -- TODO: Student Answer Here
 
+SELECT	StudentID
+FROM	Activity A
+WHERE	ClubId=
+	(SELECT ClubId
+	FROM	Club
+	WHERE	ClubName='Association of Computing Machinery')
 -- 2.b. Select the names of all the students in the 'Association of Computing Machinery' club. Use a subquery for your answer. When you make your answer, ensure the outmost query only uses the Student table in its FROM clause.
-
+SELECT	FirstName + ' ' + LastName AS 'Name'
+FROM	Student
+WHERE	StudentID IN
+	(SELECT StudentID
+	FROM	Activity
+	WHERE	ClubID=
+		(SELECT		ClubId
+		FROM		Club
+		WHERE		ClubName='Association of Computing Machinery'))
 --3. Select All the staff full names for staff that have taught a course.
 SELECT FirstName + ' ' + LastName AS 'Staff'
 FROM   Staff
@@ -42,6 +56,21 @@ FROM Staff
 --4. Select All the staff full names that taught DMIT172.
 -- TODO: Student Answer Here
 
+SELECT		FirstName + ' ' + LastName AS 'Staff name'
+FROM		Staff
+WHERE		StaffID IN
+		(SELECT DISTINCT StaffID
+		 FROM	Registration
+		 WHERE	CourseId='DMIT172')
+
+--4B WHO TAUGHT DMIT 152
+
+SELECT		FirstName + ' ' + LastName AS 'Staff name'
+FROM		Staff
+WHERE		StaffID IN
+		(SELECT DISTINCT StaffID
+		 FROM	Registration
+		 WHERE	CourseId='DMIT152')
 
 --5. Select All the staff full names of staff that have never taught a course
 SELECT FirstName + ' ' + LastName AS 'Staff'
@@ -111,17 +140,53 @@ WHERE City = 'Edm'
 -- 9. What is the avg mark for each of the students from Edm? Display their StudentID and avg(mark)
 -- TODO: Student Answer Here...
 
+SELECT AVG(Mark) AS 'Average',
+	   StudentID
+FROM   Registration
+WHERE  StudentID IN (SELECT StudentID FROM Student WHERE City = 'Edm')
+GROUP BY StudentID 
+
 -- 10. Which student(s) have the highest average mark? Hint - This can only be done by a subquery.
 -- TODO: Student Answer Here...
+SELECT	FirstName + ' ' + LastName AS 'Name'
+FROM	Student
+WHERE	StudentID IN
+	(SELECT StudentID
+	FROM   Registration
+	GROUP BY StudentID
+	HAVING	AVG(Mark)>= ALL (SELECT	AVG(Mark)	FROM Registration))
+
 
 -- 11. Which course(s) allow the largest classes? Show the course id, name, and max class size.
 -- TODO: Student Answer Here...
 
+SELECT		CourseId, CourseName, MaxStudents
+FROM		Course
+WHERE		MaxStudents=(SELECT MAX(MaxStudents)
+						FROM	Course)
+
+
 -- 12. Which course(s) are the most affordable? Show the course name and cost.
 -- TODO: Student Answer Here...
 
+SELECT		CourseName, CourseCost
+FROM		Course
+WHERE		CourseCost=(SELECT	MAX(CourseCost) FROM Course)
 -- 13. Which staff have taught the largest classes? (Be sure to group registrations by course and semester.)
 -- TODO: Student Answer Here...
 
+SELECT		FirstName + ' ' + LastName AS 'NAME'
+FROM		Staff
+WHERE		StaffID = (SELECT StaffID FROM Registration WHERE CourseId = (SELECT CourseId FROM Course WHERE MaxStudents=(SELECT MAX(MaxStudents) FROM Course)))
+
 -- 14. Which students are most active in the clubs?
 -- TODO: Student Answer Here...
+
+SELECT  FirstName + ' ' + LastName AS 'NAME'
+FROM	Student
+WHERE	StudentID IN (SELECT StudentID
+						FROM Activity 
+						GROUP BY StudentID 
+						HAVING COUNT(ClubId)>=(SELECT MAX(COUNT(ClubId)) 
+												FROM Activity 
+												GROUP BY StudentID))
