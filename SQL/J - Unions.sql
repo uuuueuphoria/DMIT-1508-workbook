@@ -71,3 +71,13 @@ select * FROM RollCall
 --    UNION that with a list of the course IDs and the MaxStudents of the course.
 --    The columns should be 'Course', 'Count', and 'Type', with the type for the
 --    first list being 'Actual-' + Semester and the type for the second list being 'Planned'.
+
+SELECT	c.CourseId, COUNT(StudentID) AS 'Count', 'Actual' AS 'Type'
+FROM	Course as c
+	left outer join Registration as r on c.CourseId=r.CourseId
+GROUP BY c.CourseId
+
+UNION
+
+SELECT	CourseId, MaxStudents AS 'Count', 'Planned' AS 'Type'
+FROM	Course
