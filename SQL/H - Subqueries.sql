@@ -150,13 +150,17 @@ GROUP BY StudentID
 -- TODO: Student Answer Here...
 SELECT	FirstName + ' ' + LastName AS 'Name'
 FROM	Student
+
 WHERE	StudentID IN
 	(SELECT StudentID
 	FROM   Registration
 	GROUP BY StudentID
 	HAVING	AVG(Mark) >= ALL (SELECT AVG(Mark)
 							FROM	Registration
-							GROUP BY StudentID))
+							WHERE	Mark IS NOT NULL
+							GROUP BY StudentID
+							))
+
 
 
 -- 11. Which course(s) allow the largest classes? Show the course id, name, and max class size.
@@ -179,7 +183,7 @@ WHERE		CourseCost=(SELECT	MAX(CourseCost) FROM Course)
 
 SELECT		FirstName + ' ' + LastName AS 'NAME'
 FROM		Staff
-WHERE		StaffID = (SELECT StaffID FROM Registration WHERE CourseId = (SELECT CourseId FROM Course WHERE MaxStudents=(SELECT MAX(MaxStudents) FROM Course)))
+WHERE		StaffID IN (SELECT StaffID FROM Registration WHERE CourseId=(SELECT CourseId FROM Course WHERE MaxStudents=(SELECT MAX(MaxStudents) FROM Course)))
 
 -- 14. Which students are most active in the clubs?
 -- TODO: Student Answer Here...
@@ -189,7 +193,7 @@ FROM	Student
 WHERE	StudentID IN (SELECT StudentID
 						FROM Activity 
 						GROUP BY StudentID 
-						HAVING COUNT(ClubId)=(SELECT MAX(COUNT(ClubId)) 
+						HAVING COUNT(ClubId)>= ALL(SELECT COUNT(ClubId) 
 												FROM Activity 
 												GROUP BY StudentID))
 						
