@@ -49,11 +49,21 @@ WHERE  City = 'Edm'
 --    create an update statement that gives each student a different mark.
 -- TODO: Student Answer Here....
 
+UPDATE Registration
+SET		Mark=66
+WHERE	Mark IS	NULL	
+
+
+
 -- 6. Choose a student from the previous question and withdraw them from all
 --    their courses.
 -- TODO: Student Answer Here....
 
-/* The following statements expect the presence of a view called StudentGrades.
+UPDATE Registration
+SET		WithdrawYN='Y'
+WHERE	STUDENTID=(SELECT StudentID FROM Student WHERE Mark=66
+
+/* The following statements expect the presence of a view called StudentGrades.*/
 IF OBJECT_ID('StudentGrades', 'V') IS NOT NULL
     DROP VIEW StudentGrades
 GO
@@ -70,12 +80,24 @@ AS
         INNER JOIN Course C ON C.CourseId = R.CourseId
 GO
 -- SELECT * FROM StudentGrades -- Use to examine the results in the view
-*/
+
 --6.  Using the StudentGrades view, change the coursename for the capstone course to be 'basket weaving 101'.
 -- TODO: Student Answer Here...
 
+UPDATE	StudentGrades
+SET		CourseName='basket weaving 101'
+WHERE	CourseName LIKE '%Capstone%'
 --7.  Using the StudentGrades view, update the  mark for studentID 199899200 in course dmit152 to be 90.
 -- TODO: Student Answer Here...
 
+UPDATE	StudentGrades
+SET		Mark=90
+WHERE	StudentID=199899200 AND CourseId='DMIT152'
 --8.  Using the StudentGrades view, delete the same record from the previous question.
 -- TODO: Student Answer Here...
+
+DELETE FROM StudentGrades
+WHERE		StudentID=199899200 AND CourseId='DMIT152'
+
+--Msg 4405, Level 16, State 1, Line 99
+--View or function 'StudentGrades' is not updatable because the modification affects multiple base tables.
