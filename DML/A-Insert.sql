@@ -15,6 +15,11 @@ GO -- Execute the code up to this point as a single batch
     INSERT INTO TableName(Comma, Separated, ListOf, ColumnNames)
     VALUES ('A', 'Value', 'Per', 'Column'),
            ('Another', 'Row', 'Of', 'Values')
+
+	when inserting values, you can use subqueries for individual values provided that the subquery returns a single value.
+
+	INSERT INTO TableName(Comma, Separated, ListOf, ColumnNames)
+    VALUES ('A', (SELECT SingleValue FROM SomeTable), 'Per', 'Column')
     
     Another syntax for the INSERT statement is to use a SELECT clause in place
     of the VALUES clause. This is used for zero-to-many possible rows to insert.
@@ -49,6 +54,14 @@ WHERE   PositionID NOT IN (SELECT PositionID FROM Staff)
 --      Add Sheldon Murray as the new Assistant Dean.
 -- TODO: Student Answer Here....
 
+INSERT INTO Staff(FirstName, LastName, DateHired, PositionID)
+SELECT 'Sheldon', 'Murray', GETDATE(), (SELECT PositionID
+						  FROM	Position
+						  WHERE	PositionID NOT IN (SELECT PositionID FROM Staff))
+
+
+							
+
 -- 3. There are three additional clubs being started at the school:
 --      - START - Small Tech And Research Teams
 --      - CALM - Coping And Lifestyle Management
@@ -64,7 +77,19 @@ VALUES ('START', 'Small Tech And Research Teams'),
 --    people to add as new students. Write separate insert statement for each new student.
 -- TODO: Student Answer Here....
 
+select * from Student
+
+INSERT INTO Student(FirstName, LastName, Gender, StreetAddress, Birthdate)
+VALUES ('Daniel', 'Bryant', 'M', '1006 Shady Ln Dr', '1972-02-07 00:00:00' ),
+		 ('Enrique', 'Tucker', 'M', '8046 Eason Rd', '1995-09-06 00:00:00' ),
+		 ('Gary', 'Morris', 'M', '3262 Dogwood Ave', '1952-05-07 00:00:00' )
 
 -- 5. Enroll each of the students you've added into the DMIT777 course.
 --    Use 'Dan Gilleland' as the instructor. At this point, their marks should be NULL.
 -- TODO: Student Answer Here....
+
+
+INSERT INTO Registration (StudentID, CourseId, Semester,Mark, StaffID)
+VALUES ((SELECT StudentID FROM Student WHERE FirstName='Daniel'), 'DMIT777', '2020M', NULL, (SELECT STAFFID FROM Staff WHERE FirstName='Dan')),
+		((SELECT StudentID FROM Student WHERE FirstName='Enrique'), 'DMIT777', '2020M', NULL, (SELECT STAFFID FROM Staff WHERE FirstName='Dan')),
+		((SELECT StudentID FROM Student WHERE FirstName='Gary'), 'DMIT777', '2020M', NULL, (SELECT STAFFID FROM Staff WHERE FirstName='Dan'))
