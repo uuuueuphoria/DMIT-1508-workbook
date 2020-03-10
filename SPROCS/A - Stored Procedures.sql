@@ -49,7 +49,7 @@ AS
     FROM   Course C
         INNER JOIN Registration R ON C.CourseId = R.CourseId
     GROUP BY C.CourseName
-    HAVING AVG(R.Mark) > 80
+    WHERE AVG(R.Mark) > 80
 RETURN
 GO
 -- To actually execute (run) the stored procedure, you call EXEC
@@ -84,6 +84,8 @@ AS
 RETURN
 GO
 
+EXEC HonorCoursesOneTerm
+GO
 --3.B. Your instructor is back, and recommends that the previous stored procedure use a parameter for the semester, making it more "re-usable"
 ALTER PROCEDURE HonorCoursesOneTerm
     @Semester   char(5) -- @ preceeds the name of the parameter
@@ -169,10 +171,60 @@ INSERT INTO Course(CourseId, CourseName, CourseHours, CourseCost, MaxStudents)
 VALUES ('DMIT987', 'Advanced Logic', 90, 420.00, 12)
 
 --6. Create a stored procedure called "Provinces" to list all the students provinces.
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = N'PROCEDURE' AND ROUTINE_NAME = 'Provinces')
+    DROP PROCEDURE Provinces
+GO
+CREATE PROCEDURE Provinces
+
+AS
+	SELECT  DISTINCT PROVINCE
+	FROM	Student
+RETURN
+GO
+
+EXEC Provinces
+GO
+
 
 --7. OK, question 6 was ridiculously simple and serves no purpose. Lets remove that stored procedure from the database.
 
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = N'PROCEDURE' AND ROUTINE_NAME = 'Provinces')
+    DROP PROCEDURE Provinces
+GO
+
 --8. Create a stored procedure called StudentPaymentTypes that lists all the student names and their payment types. Ensure all the student names are listed, including those who have not yet made a payment.
+
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = N'PROCEDURE' AND ROUTINE_NAME = 'StudentPaymentTypes')
+    DROP PROCEDURE StudentPaymentTypes
+GO
+
+CREATE PROCEDURE StudentPaymentTypes
+
+AS
+	SELECT	DISTINCT S.FirstName + ' ' + S.LastName AS 'Name',
+			t.PaymentTypeDescription
+	FROM	Student AS S
+		LEFT OUTER JOIN Payment AS P ON S.StudentID=P.StudentID
+		LEFT OUTER JOIN PaymentType AS T ON P.PaymentTypeID=T.PaymentTypeID
+
+RETURN
+GO
+
+EXEC StudentPaymentTypes
+GO
 
 --9. Modify the procedure from question 8 to return only the student names that have made payments.
 
+ALTER PROCEDURE StudentPaymentTypes
+AS
+		SELECT	DISTINCT S.FirstName + ' ' + S.LastName AS 'Name',
+			t.PaymentTypeDescription
+	FROM	Student AS S
+		INNER JOIN Payment AS P ON S.StudentID=P.StudentID
+		LEFT OUTER JOIN PaymentType AS T ON P.PaymentTypeID=T.PaymentTypeID
+
+RETURN
+GO
+
+EXEC StudentPaymentTypes
+GO
