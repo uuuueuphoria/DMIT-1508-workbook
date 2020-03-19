@@ -141,7 +141,7 @@ GO
 EXEC LookupClubMembers 'CHESS'
 EXEC LookupClubMembers 'CSS'
 EXEC LookupClubMembers 'Drop Out'
-EXEC LookupClubMembers 'NASA1'
+EXEC LookupClubMembers 'NASA1' --although this returns zero rows, it is a valid result for thei SPROC
 EXEC LookupClubMembers NULL
 
 -- 3) Create a stored procedure called RemoveClubMembership that takes a club ID and deletes all the members of that club. Be sure that the club exists. Also, raise an error if there were no members deleted from the club.
@@ -162,7 +162,7 @@ AS
         DELETE FROM Activity
         WHERE       ClubId = @ClubId
         -- Any Insert/Update/Delete will affect the global @@ROWCOUNT value
-        IF @@ROWCOUNT = 0
+        IF @@ROWCOUNT = 0 --OR @@ERROR <> 0
         BEGIN
             RAISERROR('No members were deleted', 16, 1)
         END
@@ -179,13 +179,78 @@ EXEC RemoveClubMembership 'CSS' -- The second time this is run, there will be no
 
 -- 4) Create a stored procedure called OverActiveMembers that takes a single number: ClubCount. This procedure should return the names of all members that are active in as many or more clubs than the supplied club count.
 --    (p.s. - You might want to make sure to add more members to more clubs, seeing as tests for the last question might remove a lot of club members....)
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = N'PROCEDURE' AND ROUTINE_NAME = 'OverActiveMembers')
+    DROP PROCEDURE OverActiveMembers
+GO
+CREATE PROCEDURE OverActiveMembers
+	@ClubCount		int
+AS
+	IF @ClubCount IS NULL
+		RAISERROR ('Club count invalid', 16, 1)
+	ELSE
+		IF @ClubCount <0
+			RAISERROR ('Invalid input, ClubCount cannot be negative', 16, 1)
+		ELSE
+		BEGIN
+			SELECT  S.firstName + ' ' + S.LastName AS 'Name'
+			FROM	Student S
+				LEFT OUTER JOIN Activity as A ON S.StudentID =A.StudentID
+			GROUP BY A.StudentID, S.FirstName, S. LastName
+			HAVING	COUNT(A.ClubId)>=@ClubCount
+			
+		END
+RETURN
+GO
 
+EXEC OverActiveMembers NULL
+GO
+
+EXEC OverActiveMembers 2
+GO
 
 
 -- 5) Create a stored procedure called ListStudentsWithoutClubs that lists the full names of all students who are not active in a club.
 
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = N'PROCEDURE' AND ROUTINE_NAME = 'ListStudentsWithoutClubs')
+    DROP PROCEDURE ListStudentsWithoutClubs
+GO
+CREATE PROCEDURE ListStudentsWithoutClubs
+AS
+	SELECT	S.FirstName + ' ' + S. LastName as 'Name', S.StudentID
+	FROM	Student S
+		LEFT OUTER JOIN Activity AS A ON A.StudentID=S.StudentID
+	WHERE	ClubId is NULL
+RETURN
+GO
 
-
+EXEC ListStudentsWithoutClubs
+GO
+SELECT* FROM Activity
 -- 6) Create a stored procedure called LookupStudent that accepts a partial student last name and returns a list of all students whose last name includes the partial last name. Return the student first and last name as well as their ID.
+
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = N'PROCEDURE' AND ROUTINE_NAME = 'LookupStudent')
+    DROP PROCEDURE LookupStudent
+GO
+CREATE PROCEDURE LookupStudent
+	@particalLastName varchar(35)
+AS
+	IF @particalLastName IS NULL
+		RAISERROR ('last name cannot be empty', 16, 1)
+	ELSE
+		IF @particalLastName LIKE '%[0-9]%'
+			RAISERROR ('Cannot have number in last name', 16, 1)
+		ELSE
+		BEGIN
+	SELECT	FirstName+ ' ' + LastName AS 'Name', StudentID
+	FROM	Student
+	WHERE	LastName LIKE '%'+@particalLastName+'%'
+	END
+RETURN
+GO
+
+EXEC LookupStudent 'OO'
+EXEC LookupStudent NULL
+EXEC LookupStudent '07'
+EXEC LookupStudent 'N7'
 
 
