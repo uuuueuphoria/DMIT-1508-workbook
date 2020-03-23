@@ -11,8 +11,8 @@ IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = N'PROC
     DROP PROCEDURE ListStudentMarksByRange
 GO
 CREATE PROCEDURE ListStudentMarksByRange
-	@lower	DECIMAL,
-	@upper	DECIMAL
+	@lower	decimal,
+	@upper	decimal
 AS
 		SELECT  StudentID, CourseId, Mark
 		FROM    Registration

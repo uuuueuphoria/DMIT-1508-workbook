@@ -240,6 +240,9 @@ AS
 		IF @particalLastName LIKE '%[0-9]%'
 			RAISERROR ('Cannot have number in last name', 16, 1)
 		ELSE
+			IF NOT EXISTS (SELECT * FROM Student WHERE LastName LIKE '%'+@particalLastName+'%')
+				RAISERROR ('This student is not exist', 16, 1)
+			ELSE
 		BEGIN
 	SELECT	FirstName+ ' ' + LastName AS 'Name', StudentID
 	FROM	Student
@@ -250,7 +253,7 @@ GO
 
 EXEC LookupStudent 'OO'
 EXEC LookupStudent NULL
-EXEC LookupStudent '07'
+EXEC LookupStudent 'ul'
 EXEC LookupStudent 'N7'
 
 
