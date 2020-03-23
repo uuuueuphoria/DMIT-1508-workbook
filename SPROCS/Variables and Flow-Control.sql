@@ -2,10 +2,14 @@
 
 -- Declare a variable
 DECLARE @Cost money
+SELECT @Cost
 -- Set a value for the variable using a value from the database
 -- Note that the whole SELECT statement is in parenthesis
 SET @Cost = (SELECT CourseCost FROM Course WHERE CourseId = 'DMIT101')
 PRINT @Cost
+--set a value for the variable within a select statement
+DECLARE @Cost money
+SET @Cost=(SELECT CourseCost FROM COURSE WHERE CourseId='DMIT101')
 
 
 -- Understanding BEGIN/END blocks
