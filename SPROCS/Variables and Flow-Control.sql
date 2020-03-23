@@ -1,5 +1,6 @@
 -- Variables and Flow Control
-
+USE [A01-School]
+GO
 -- Declare a variable
 DECLARE @Cost money
 SELECT @Cost
