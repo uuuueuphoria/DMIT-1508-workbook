@@ -184,13 +184,13 @@ AS
         SELECT @CurrentCount = COUNT (StudentID) FROM Registration WHERE CourseId = @CourseID AND Semester = @Semester
         SELECT @CourseCost = CourseCost FROM Course WHERE CourseId = @CourseID
 
-        IF @MaxStudents >= @currentcount 
+        IF @MaxStudents <= @currentcount 
         BEGIN
             RAISERROR('The course is already full', 16, 1)
         END
         ELSE
         BEGIN
-            BEGIN TRANSACTION
+            BEGIN TRANSACTION--change will be temporary and can be rolled back
 
             INSERT INTO Registration (StudentID, CourseId, Semester)
             VALUES (@StudentID, @CourseID, @Semester)
@@ -221,6 +221,15 @@ AS
 RETURN
 
 GO
+--Test 
+--select * from registration 2004J, DMIT152
+EXEC RegisterStudent 199912010, 'DMIT152', '2004J'
+EXEC RegisterStudent 199966250, 'DMIT152', '2004J'
+EXEC RegisterStudent 200011730, 'DMIT152', '2004J'
+EXEC RegisterStudent 200122100, 'DMIT152', '2004J'
+EXEC RegisterStudent 200312345, 'DMIT152', '2004J'
+
+
 
 -- 4. Add a stored procedure called WitnessProtection that erases all existence of a student from the database. The stored procedure takes the StudentID, first and last names, gender, and birthdate as parameters. Ensure that the student exists in the database before removing them (all the parameter values must match).
 IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = N'PROCEDURE' AND ROUTINE_NAME = 'WitnessProtection')
@@ -353,7 +362,7 @@ CREATE PROCEDURE WithdrawStudent
     @Semester   char(5)
 AS
     -- Declare a bunch of local/temp variables
-    DECLARE @coursecost     decimal (6,2)
+    DECLARE @coursecost     decimal (6,2) --6, 2 =money data type
     DECLARE @amount         decimal(6,2)
     DECLARE @balanceowing   decimal(6,2)
     DECLARE @difference     decimal(6,2)
@@ -428,7 +437,7 @@ GO
 IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'ArchiveGrade')
     DROP TABLE ArchiveGrade
 
-CREATE TABLE ArchiveGrade
+CREATE TABLE ArchiveGrade --fairly simple, no PKs, no FKs, no CHECK
 (
     StudentID        int,
     CourseId        char (7),
@@ -479,3 +488,197 @@ AS
 RETURN
 GO
 
+
+-- 2. In response to recommendations in our business practices, we are required to create an audit record of all changes to the Payment table. As such, all updates and deletes from the payment table will have to be performed through stored procedures rather than direct table access. For these stored procedures, you will need to use the following PaymentHistory table.
+GO
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'PaymentHistory')
+    DROP TABLE PaymentHistory
+
+CREATE TABLE PaymentHistory
+(
+    AuditID         int
+        CONSTRAINT PK_PaymentHistory
+        PRIMARY KEY
+        IDENTITY(10000,1)
+                                NOT NULL,
+    PaymentID       int         NOT NULL,
+    PaymentDate     datetime    NOT NULL,
+    PriorAmount     money       NOT NULL,
+    PaymentTypeID   tinyint     NOT NULL,
+    StudentID       int         NOT NULL,
+    DMLAction       char(6)     NOT NULL
+        CONSTRAINT CK_PaymentHistory_DMLAction
+            CHECK  (DMLAction IN ('UPDATE', 'DELETE'))
+)
+GO
+
+-- 2.a. Create a stored procedure called UpdatePayment that has a parameter to match each column in the Payment table. This stored procedure must first record the specified payment's data in the PaymentHistory before applying the update to the Payment table itself.
+GO
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = N'PROCEDURE' AND ROUTINE_NAME = 'UpdatePayment')
+    DROP PROCEDURE UpdatePayment
+GO
+CREATE PROCEDURE UpdatePayment
+	@PaymentID	int,
+	@PriorAmount	money,
+	@PaymentTypeID	tinyint,
+	@StudentID	int,
+	@PaymentDate	datetime
+AS
+	IF @PaymentID IS NULL OR @PriorAmount IS NULL OR @PaymentTypeID IS NULL OR @StudentID IS NULL or @PaymentDate IS NULL
+		RAISERROR ('You must enter the parameter', 16,1)
+	ELSE
+		IF EXISTS (SELECT * FROM PaymentHistory
+				WHERE PaymentID=@PaymentID AND PriorAmount=@PriorAmount AND PaymentTypeID=@PaymentTypeID AND StudentID=@StudentID AND @PaymentDate=PaymentDate AND DMLAction='UPDATE')
+			RAISERROR ('Already exists', 16, 1)
+		ELSE
+		BEGIN TRANSACTION
+			IF NOT EXISTS (SELECT * FROM PaymentType WHERE @PaymentTypeID=PaymentTypeID)
+				BEGIN
+					RAISERROR ('Wrong PaymentType ID' ,16, 1)
+					ROLLBACK TRANSACTION
+				END
+			ELSE
+				IF NOT EXISTS (SELECT * FROM Student WHERE StudentID=@StudentID)
+					BEGIN 
+						RAISERROR ('Wrong Student ID', 16, 1)
+						ROLLBACK TRANSACTION
+					END
+				ELSE
+					IF NOT EXISTS (SELECT* FROM Payment WHERE @PaymentID=PaymentID)
+					BEGIN
+						RAISERROR ('Wrong PaymentID', 16, 1)
+						ROLLBACK TRANSACTION
+					END
+					ELSE
+				BEGIN
+					INSERT INTO PaymentHistory(PaymentID, PaymentDate, PriorAmount, PaymentTypeID, StudentID, DMLAction)
+					values (@PaymentID, @PaymentDate, @PriorAmount, @PaymentTypeID, @StudentID, 'UPDATE')
+					IF @@ERROR <>0
+						BEGIN
+							RAISERROR ('Cannot complete update', 16,1)
+							ROLLBACK TRANSACTION
+						END
+					ELSE
+						BEGIN
+							INSERT INTO Payment (PaymentID, PaymentDate, Amount, PaymentTypeID, StudentID)
+							VALUES (@PaymentID, @PaymentDate, @PriorAmount, @PaymentTypeID, @StudentID)
+								IF @@ERROR <>0
+								BEGIN
+								 RAISERROR ('UPDATE NOT COMPLETE', 16, 1)
+								 ROLLBACK TRANSACTION
+								END
+								ELSE
+								BEGIN
+								COMMIT TRANSACTION
+								END
+
+						END
+				END
+RETURN
+GO
+
+EXEC UpdatePayment 13220, 25.00, 3, 200320010, '2019-10-05'
+GO
+sp_help PaymentHistory
+
+
+-- 2.b. Create a stored procedure called DeletePayment that has a parameter identifying the payment ID and the student ID. This stored procedure must first record the specified payment's data in the PaymentHistory before removing the payment from the Payment table.
+GO
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = N'PROCEDURE' AND ROUTINE_NAME = 'DeletePayment')
+    DROP PROCEDURE DeletePayment
+GO
+CREATE PROCEDURE DeletePayment
+	@PaymentID	int,
+	@StudentID	int
+AS
+	
+
+
+	IF @PaymentID IS NULL OR @StudentID IS NULL
+		RAISERROR ('Cannot be null', 16, 1)
+	ELSE
+		IF NOT EXISTS (SELECT * FROM PaymentHistory WHERE PaymentID=@PaymentID AND StudentID=@StudentID)
+			RAISERROR ('Payment not exists', 16, 1)
+		ELSE
+		DECLARE @paymentDate	datetime
+		DECLARE @PriorAmount	MONEY
+		DECLARE @PaymentTypeID		int	
+		SELECT @paymentDate		FROM Payment WHERE PaymentID=@PaymentID AND StudentID=@StudentID
+		SELECT @PriorAmount FROM Payment WHERE PaymentID=@PaymentID AND StudentID=@StudentID
+		SELECT @PaymentTypeID FROM Payment WHERE PaymentID=@PaymentID AND StudentID=@StudentID
+		BEGIN TRANSACTION
+			INSERT INTO PaymentHistory (PaymentID, PaymentDate, PriorAmount, PaymentTypeID, StudentID, DMLAction)
+			VALUES (@PaymentID, @PaymentDate, @PriorAmount, @PaymentTypeID, @StudentID, 'DELETE')
+			IF @@ERROR<>0
+				BEGIN
+					RAISERROR ('Delete not succeed', 16, 1)
+					ROLLBACK TRANSACTION
+				END
+			ELSE
+			DELETE FROM Payment WHERE PaymentID=@PaymentID AND StudentID=@StudentID
+				IF @@ERROR<>0
+					BEGIN
+						RAISERROR ('DELETE NOT SUCCEED', 16,1)
+						ROLLBACK TRANSACTION
+					END
+				ELSE
+					BEGIN
+					COMMIT TRANSACTION
+					END
+	RETURN
+GO
+				
+
+
+-- 3. Create a stored procedure called ArchivePayments. This stored procedure must transfer all payment records to the StudentPaymentArchive table. After archiving, delete the payment records.
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'StudentPaymentArchive')
+    DROP TABLE StudentPaymentArchive
+
+CREATE TABLE StudentPaymentArchive
+(
+    ArchiveId       int
+        CONSTRAINT PK_StudentPaymentArchive
+        PRIMARY KEY
+        IDENTITY(1,1)
+                                NOT NULL,
+    StudentID       int         NOT NULL,
+    FirstName       varchar(25) NOT NULL,
+    LastName        varchar(35) NOT NULL,
+    PaymentMethod   varchar(40) NOT NULL,
+    Amount          money       NOT NULL,
+    PaymentDate     datetime    NOT NULL
+)
+
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = N'PROCEDURE' AND ROUTINE_NAME = 'ArchivePayments')
+    DROP PROCEDURE ArchivePayments
+GO
+CREATE PROCEDURE ArchivePayments
+AS
+		BEGIN TRANSACTION
+		INSERT INTO StudentPaymentArchive(StudentID, FirstName, LastName, PaymentMethod, Amount, PaymentDate)
+		SELECT Payment.StudentID, FirstName, LastName, PaymentTypeDescription, Amount, PaymentDate
+		FROM	Student INNER JOIN Payment on Student.StudentID=Payment.StudentID
+						INNER JOIN PaymentType P on P.PaymentTypeID=Payment.PaymentTypeID
+			IF @@ERROR<>0
+				BEGIN
+				RAISERROR ('ARCHIVE NOT COMPLETE', 16, 1)
+				ROLLBACK TRANSACTION
+				END
+			ELSE
+			BEGIN
+				DELETE FROM Payment
+				IF
+				@@ERROR<>0
+				 BEGIN
+				 RAISERROR ('ARCHIVE NOT COMPLETE', 16,1)
+				 ROLLBACK TRANSACTION
+				 END
+				ELSE
+				BEGIN
+					COMMIT TRANSACTION
+				END
+			END
+	RETURN
+GO
+
+sp_help StudentPaymentArchive
