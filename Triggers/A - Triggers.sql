@@ -3,6 +3,25 @@ USE [A01-School]
 GO
 
 /*
+
+if you recall transactions, they are used whenever we have 2 or more of an INSERT/UPDATE/DELETE.
+A transaction holds the database changes ina temporary state and finalizes it with a COMMIT TRANSACTION.
+
+For individual insert/update/delete statements, sql server manages its own transaction for that change on the database table. sql server does this using two temporary tables it constructs for the DML statement.
+table name: inserted, deleted 
+
+trigger is started by insert/update/delete
+
+Triggers are our opportunity to intercept the internal transaction that SQL server does for each INSERT/UPDATE/DELETE
+Triggers are never called directly by our scripts, instead they are called (or triggered) by SQL server
+
+triggers are sued for
+-performing complex validations that cannot be done with ordinanry CHECK constraints or other constraints
+	ex. I compare sth in this table with sth from multiples or against some aggregates. 
+-a opportunity to do some archiving or auditing actions
+-to prevent update/insert/delete from happening
+
+
 IF EXISTS (SELECT * FROM sys.triggers WHERE object_id = OBJECT_ID(N'[dbo].[Table_TriggerType]'))
     DROP TRIGGER Table_TriggerType
 GO
@@ -21,7 +40,9 @@ IF EXISTS (SELECT * FROM sys.triggers WHERE object_id = OBJECT_ID(N'[dbo].[Activ
 GO
 
 CREATE TRIGGER Activity_DML_Diagnostic
-ON Activity
+ON Activity --the trigger is attached to the activity table, this trigger will be called anytime there is an INSERT/UPDATE/DELETE
+--if you drop the table, trigger is dropped, too
+
 FOR Insert, Update, Delete -- Choose only the DML statement(s) that apply
 AS
     -- Body of Trigger
@@ -32,7 +53,7 @@ RETURN
 GO
 -- Demonstrate the diagnostic trigger
 SELECT * FROM Activity
-INSERT INTO Activity(StudentID, ClubId) VALUES (200494476, 'CIPS')
+INSERT INTO Activity(StudentID, ClubId) VALUES (200494476, 'CIPS')--our trigger will be called
 -- (note: generally, it's not a good idea to change a primary key, even part of one)
 UPDATE Activity SET ClubId = 'NASA1' WHERE StudentID = 200494476
 DELETE FROM Activity WHERE StudentID = 200494476
@@ -67,6 +88,8 @@ SELECT StudentID, FirstName, LastName FROM Student WHERE StudentID = 200495500
 -- The following test should result in a rollback.
 INSERT INTO Activity(StudentID, ClubId)
 VALUES (200495500, 'CIPS') -- Robert Smith
+
+select* from Activity WHERE StudentID=200495500
 
 -- The following should succeed
 INSERT INTO Activity(StudentID, ClubId)
@@ -128,7 +151,40 @@ GO
 SELECT * FROM Student WHERE BalanceOwing > 0
 
 -- Write a stored procedure called RegisterStudent that puts a student in a course and increases the balance owing by the cost of the course.
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = N'PROCEDURE' AND ROUTINE_NAME = 'RegisterStudent')
+    DROP PROCEDURE RegisterStudent
+GO
+CREATE PROCEDURE RegisterStudent
+	@StudentID	int,
+	@CourseID	char(7)
+AS
+	IF NOT EXISTS (SELECT StudentID	FROM Student WHERE StudentID=@StudentID)
+		RAISERROR ('Student not exists', 16, 1)
+		ELSE IF NOT EXISTS (SELECT CourseId	FROM Course WHERE CourseId=@CourseID)
+			RAISERROR ('Courses not exists', 16, 1)
+			ELSE
+			BEGIN
+				UPDATE Student
+				SET		BalanceOwing=BalanceOwing+ (SELECT CourseCost FROM Course WHERE CourseId=@CourseID)
+			END
+			BEGIN
+				INSERT Registration (StudentID, CourseId, Semester, WithdrawYN, StaffID)
+				VALUES (@StudentID, @CourseID, '2020S', 'N', 1)
+			END
+	RETURN
+GO	
 
+/*
+SELECT * FROM Staff
+SELECT * FROM Registration
+SELECT * FROM Student
+select * from Course
+
+EXEC RegisterStudent 199899200, 'DMIT259'
+EXEC RegisterStudent 199899200, 'DMIT101'
+EXEC RegisterStudent 199892578, 'DMIT259'
+EXEC RegisterStudent 199899200, 'AREC323'
+*/
 
 --4. Our school DBA has suddenly disabled some Foreign Key constraints to deal with performance issues! Create a trigger on the Registration table to ensure that only valid CourseIDs, StudentIDs and StaffIDs are used for grade records. (You can use sp_help tablename to find the name of the foreign key constraints you need to disable to test your trigger.) Have the trigger raise an error for each foreign key that is not valid. If you have trouble with this question create the trigger so it just checks for a valid student ID.
 -- sp_help Registration -- then disable the foreign key constraints....
