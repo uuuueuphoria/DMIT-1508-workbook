@@ -70,10 +70,12 @@ select * from Course
 INSERT INTO Registration(StudentID, CourseId, Semester, Mark, WithdrawYN, StaffID)
 VALUES (200122100, 'DMIT259','2004M', 77.00, 'N',4)
 
+
+
 -- C. Create a trigger that will add students to a wait list if the course is already full. You should design the WaitList table to accommodate the changes needed for adding a student to the course once space is freed up for the course. Students should be added on a first-come-first-served basis (i.e. - include a timestamp in your WaitList table)
 
 CREATE TABLE Waitlist
-(	StudentID		int				Constraint PK_StudentID PRIMARY KEY not null,
+(	StudentID		int				 not null,
 	CourseId		char (7)			not null,
 	Semester		char (5)				not null,
 	Mark			decimal(5,2)		null,
@@ -90,21 +92,18 @@ CREATE TRIGGER OH
 ON Registration
 FOR INSERT -- Choose only the DML statement(s) that apply
 AS
+    IF EXISTS (SELECT C.CourseId FROM Registration R inner join Course C ON R.CourseId=C.CourseId INNER JOIN inserted I ON R.CourseId=I.CourseId
+				WHERE R.CourseId=I.CourseId AND R.Semester=I.Semester
+				GROUP BY MaxStudents, C.CourseId
+				HAVING COUNT(R.StudentID)>=MaxStudents)
 	BEGIN
 	    INSERT INTO Waitlist(StudentID, CourseId, Semester, Mark, WithdrawYN, StaffID, DateAdded)
 	    SELECT I.StudentID, I.CourseId, I.Semester, I.Mark, I.WithdrawYN, I.StaffID, GETDATE()
         FROM inserted I
-	    	IF NOT EXISTS (SELECT C.CourseId FROM Registration R inner join Course C ON R.CourseId=C.CourseId INNER JOIN inserted I ON R.CourseId=I.CourseId
-				WHERE R.CourseId=I.CourseId AND R.Semester=I.Semester
-				GROUP BY MaxStudents, C.CourseId
-				HAVING COUNT(R.StudentID)>=MaxStudents)
-				BEGIN
-				RAISERROR('Cannot add to waitlist',16,1)
-				ROLLBACK TRANSACTION
-		END	
-	END
-RETURN
+	END	
+ RETURN
 GO
+
 INSERT INTO Registration(StudentID, CourseId, Semester, Mark, WithdrawYN, StaffID)
 VALUES (200688700, 'DMIT101','2000S', 77.00, 'N',1)
 INSERT INTO Registration(StudentID, CourseId, Semester, Mark, WithdrawYN, StaffID)
