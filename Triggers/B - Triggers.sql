@@ -47,24 +47,28 @@ IF EXISTS (SELECT * FROM sys.triggers WHERE object_id = OBJECT_ID(N'[dbo].[Regis
     DROP TRIGGER Registration_Insert
 GO
 
+
 CREATE TRIGGER Registration_Insert
 ON Registration
 FOR Insert
 AS 
-	IF @@ROWCOUNT>0
-		AND
-		EXISTS (SELECT C.CourseId FROM Registration R inner join Course C ON R.CourseId=C.CourseId INNER JOIN inserted I ON R.CourseId=I.CourseId
+	IF EXISTS (SELECT C.CourseId FROM Registration R inner join Course C ON R.CourseId=C.CourseId INNER JOIN inserted I ON R.CourseId=I.CourseId
 				WHERE R.CourseId=I.CourseId AND R.Semester=I.Semester
 				GROUP BY MaxStudents, C.CourseId
-				HAVING COUNT(R.StudentID)>=MaxStudents
-				)
+				HAVING COUNT(R.StudentID)>=MaxStudents)
 	BEGIN
 		RAISERROR('That class is full', 16, 1)
 		ROLLBACK TRANSACTION
 	END
+	
+	INSERT INTO Waitlist(StudentID, CourseId, Semester, Mark, WithdrawYN, StaffID, DateAdded)
+	SELECT I.StudentID, I.CourseId, I.Semester, I.Mark, I.WithdrawYN, I.StaffID, GETDATE()
+    FROM inserted I
+	
 RETURN
 GO
 
+SELECT * FROM Waitlist
 select * from Registration
 select * from Course
 INSERT INTO Registration(StudentID, CourseId, Semester, Mark, WithdrawYN, StaffID)
@@ -83,6 +87,7 @@ CREATE TABLE Waitlist
 	StaffID			smallint				null,
 	DateAdded		datetime
 )
+GO
 	
 IF EXISTS (SELECT * FROM sys.triggers WHERE object_id = OBJECT_ID(N'[dbo].[OH]'))
     DROP TRIGGER OH
@@ -92,15 +97,19 @@ CREATE TRIGGER OH
 ON Registration
 FOR INSERT -- Choose only the DML statement(s) that apply
 AS
-    IF EXISTS (SELECT C.CourseId FROM Registration R inner join Course C ON R.CourseId=C.CourseId INNER JOIN inserted I ON R.CourseId=I.CourseId
-				WHERE R.CourseId=I.CourseId AND R.Semester=I.Semester
-				GROUP BY MaxStudents, C.CourseId
-				HAVING COUNT(R.StudentID)>=MaxStudents)
 	BEGIN
 	    INSERT INTO Waitlist(StudentID, CourseId, Semester, Mark, WithdrawYN, StaffID, DateAdded)
 	    SELECT I.StudentID, I.CourseId, I.Semester, I.Mark, I.WithdrawYN, I.StaffID, GETDATE()
         FROM inserted I
 	END	
+	    IF NOT EXISTS (SELECT C.CourseId FROM Registration R inner join Course C ON R.CourseId=C.CourseId INNER JOIN inserted I ON R.CourseId=I.CourseId
+				WHERE R.CourseId=I.CourseId AND R.Semester=I.Semester
+				GROUP BY MaxStudents, C.CourseId
+				HAVING COUNT(R.StudentID)>=MaxStudents)
+		BEGIN
+		 RAISERROR('CANNOT ADD TO WAITLIST', 16,1)
+		 ROLLBACK TRANSACTION
+		END
  RETURN
 GO
 
@@ -109,6 +118,7 @@ VALUES (200688700, 'DMIT101','2000S', 77.00, 'N',1)
 INSERT INTO Registration(StudentID, CourseId, Semester, Mark, WithdrawYN, StaffID)
 VALUES (200688700, 'DMIT103','2000S', 77.00, 'N',2)
 SELECT * FROM Waitlist
+
 
 
 -- D. Create a trigger that will add students to a course whenever another student withdraws from that course. Pull your students from the WaitList table on a first-come-first-served basis.
