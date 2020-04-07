@@ -81,7 +81,7 @@ IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'WaitList'
 GO
 CREATE TABLE WaitList
 (
-    LogID           int  IDENTITY (1,1) NOT NULL CONSTRAINT PK_BalanceOwingLog PRIMARY KEY,
+    LogID           int  IDENTITY (1,1) NOT NULL,
     StudentID       int                 NOT NULL,
     CourseID        char(7)             NOT NULL,
     Semester        char(5)             NOT NULL,
