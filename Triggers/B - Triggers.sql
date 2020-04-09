@@ -81,14 +81,14 @@ IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'WaitList'
 GO
 CREATE TABLE WaitList
 (
-    LogID           int  IDENTITY (1,1) NOT NULL,
+    LogID           int  IDENTITY (1,1) NOT NULL CONSTRAINT PK_Balance PRIMARY KEY,
     StudentID       int                 NOT NULL,
     CourseID        char(7)             NOT NULL,
     Semester        char(5)             NOT NULL,
     AddedOn         datetime            NOT NULL
 )
 GO
-	
+-- Step 2) Modify the trigger
 ALTER TRIGGER Registration_ClassSizeLimit
 ON Registration
 FOR Insert
